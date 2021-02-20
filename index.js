@@ -1,6 +1,7 @@
 import mapboxgl from 'mapbox-gl';
 import { point } from '@turf/helpers';
 import distance from '@turf/distance';
+import { RecordingToggle } from './recording.js';
 
 const audio = new Audio();
 const testpoint = point([-73.95630, 40.75617]);
@@ -56,6 +57,7 @@ geolocate.on('geolocate', () => {
 });
 
 map.addControl(geolocate);
+map.addControl(new RecordingToggle(), "top-right");
 
 map.on('load', () => {
   // eslint-disable-next-line no-underscore-dangle
