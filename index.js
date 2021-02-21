@@ -1,9 +1,33 @@
 import mapboxgl from 'mapbox-gl';
 import { point } from '@turf/helpers';
 import distance from '@turf/distance';
-import { RecordingToggle } from './recording.js';
+import { RecordingToggle } from './recording';
+
+const numAudioNodes = 10;
+const audioNodes = [];
+let gps;
+
+for (let i = 0; i < numAudioNodes; i++) {
+  const node = new Audio();
+  node.volume = 0;
+  node.onended = () => { setTimeout(() => { node.play(); }, 2000); };
+  audioNodes.push(node);
+}
+
+setInterval(() => {
+  audioNodes.forEach((node) => {
+    if (node.volume!== 0) {
+      console.log('src: ', node.src, ', vol:', node.volume);
+    }
+  });
+}, 500);
+
 
 const audio = new Audio();
+audio.src = './benett_test.m4a';
+audio.currentTime = 40;
+// audio.volume = 0;
+window.audio = audio;
 const testpoint = point([-73.95630, 40.75617]);
 
 // testing easeinCirc
@@ -11,7 +35,6 @@ const scaleAudio = (vol) => 1 - Math.sqrt(1 - vol ** 2);
 
 // dist to audio source
 // audioStart is distance you start hearing anything
-// eslint-disable-next-line max-len
 const dist2volume = (dist, audioStart) => scaleAudio((Math.min(dist, audioStart) - audioStart) / -audioStart);
 
 const steps = [];
@@ -22,16 +45,15 @@ for (let i = -0.1; i < 0.1; i += 0.002) {
 }
 
 // This would be mapped to distances but wanted to test the function of walking by an audio source
-
-audio.onplay = () => {
-  steps.forEach((step, stepIdx) => {
-    setTimeout(() => {
-      const vol = dist2volume(step, 0.07);
-      console.log('dist: ', step, 'vol: ', vol);
-      audio.volume = vol;
-    }, stepmillis * stepIdx);
-  });
-};
+// audio.onplay = () => {
+//   steps.forEach((step, stepIdx) => {
+//     setTimeout(() => {
+//       const vol = dist2volume(step, 0.07);
+//       console.log('dist: ', step, 'vol: ', vol);
+//       audio.volume = vol;
+//     }, stepmillis * stepIdx);
+//   });
+// };
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiaW1hbmRlbCIsImEiOiJjankxdjU4ODMwYTViM21teGFpenpsbmd1In0.IN9K9rp8-I5pTbYTmwRJ4Q';
 const map = new mapboxgl.Map({
@@ -49,24 +71,47 @@ const geolocate = new mapboxgl.GeolocateControl({
   compact: true,
 });
 
-geolocate.on('geolocate', () => {
-  // eslint-disable-next-line no-underscore-dangle
-  const { latitude, longitude } = geolocate._lastKnownPosition.coords;
+const rankAudios = () => {
+  const features = map.queryRenderedFeatures({ layers: ['audio-samples'] });
 
-  console.log(distance(point([longitude, latitude]), testpoint));
+  features.sort((a, b) => {
+    const dist1 = distance(point([a.properties.lng, a.properties.lat]), gps);
+    const dist2 = distance(point([b.properties.lng, b.properties.lat]), gps);
+    return dist1 - dist2;
+  });
+  return features;
+};
+
+geolocate.on('geolocate', (e) => {
+  const { latitude, longitude } = e.coords;
+  gps = point([longitude, latitude]);
+
+  const closeTen = rankAudios().slice(0, 10);
+  audioNodes.forEach((node, idx) => {
+    const rankSrc = `./sounds/${closeTen[idx].properties.filename}`
+    if(node.src !== rankSrc && node.volume===0){
+      node.src = rankSrc;
+      node.volume = 0;
+      node.oncanplaythrough = () => node.play();
+    }
+    // audioNodes[idx].src = `./sounds/${soundFeatures.properties.filename}`;
+    const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
+    node.volume = dist2volume(dist, 0.07);
+  });
+  // console.log(closeTen);
 });
 
 map.addControl(geolocate);
-map.addControl(new RecordingToggle(), "top-right");
+map.addControl(new RecordingToggle(), 'top-right');
 
 map.on('load', () => {
-  // eslint-disable-next-line no-underscore-dangle
-  geolocate._geolocateButton.onclick = () => {
-    audio.src = './benett_test.m4a';
-    audio.currentTime = 40;
-    audio.volume = 0;
-    audio.play();
-  };
+  // this was for testing the audio dropoff
+  // geolocate._geolocateButton.onclick = () => {
+  // audio.src = './benett_test.m4a';
+  // audio.currentTime = 40;
+  // audio.volume = 0;
+  // audio.play();
+  // };
 
   map.addSource('pointSource', {
     type: 'geojson',
