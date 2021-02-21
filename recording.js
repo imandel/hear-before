@@ -2,6 +2,10 @@ import MicroModal from 'micromodal';
 import WaveSurfer from 'wavesurfer.js';
 import MicrophonePlugin from 'wavesurfer.js/src/plugin/microphone';
 
+// TODO add ability to upload an audio file;
+// TODO mute all audionodes before recording/showing modal
+
+
 const downloadAudio = (url) => {
   const a = document.createElement('a');
   document.body.appendChild(a);
@@ -104,6 +108,8 @@ class RecordingToggle {
         setupAudio(record, play, download, wavesurfer);
         // record.onclick = () => wavesurfer.microphone.start();
         // stop.onclick = () => wavesurfer.microphone.stop();
+      } else {
+        MicroModal.close('modal-1');
       }
     };
 
