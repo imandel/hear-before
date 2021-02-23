@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { point } from '@turf/helpers';
+import { point, feature } from '@turf/helpers';
 import distance from '@turf/distance';
 import { RecordingToggle } from './recording';
 
@@ -73,7 +73,6 @@ const geolocate = new mapboxgl.GeolocateControl({
 
 const rankAudios = () => {
   const features = map.queryRenderedFeatures({ layers: ['audio-samples'] });
-
   features.sort((a, b) => {
     const dist1 = distance(point([a.properties.lng, a.properties.lat]), gps);
     const dist2 = distance(point([b.properties.lng, b.properties.lat]), gps);
@@ -84,11 +83,14 @@ const rankAudios = () => {
 
 geolocate.on('geolocate', (e) => {
   const { latitude, longitude } = e.coords;
-  gps = point([longitude, latitude]);
+  console.log(testpoint);
+  gps = point([testpoint.geometry.coordinates[0], testpoint.geometry.coordinates[1]]);
+  // gps = point([longitude, latitude]);
 
   const closeTen = rankAudios().slice(0, 10);
   audioNodes.forEach((node, idx) => {
-    const rankSrc = `./sounds/${closeTen[idx].properties.filename}`
+    // const rankSrc = `./sounds/${closeTen[idx].properties.filename}`
+    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/sounds/${closeTen[idx].properties.filename}`
     if(node.src !== rankSrc && node.volume===0){
       node.src = rankSrc;
       node.volume = 0;
@@ -98,7 +100,7 @@ geolocate.on('geolocate', (e) => {
     const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
     node.volume = dist2volume(dist, 0.07);
   });
-  // console.log(closeTen);
+  console.log(closeTen);
 });
 
 map.addControl(geolocate);
@@ -129,3 +131,41 @@ map.on('load', () => {
     },
   });
 });
+
+document.addEventListener('keydown', function(event) {
+  if(event.keyCode == 65) {
+    testpoint.geometry.coordinates[0] -= .0001
+  }
+  else if(event.keyCode == 68) {
+    testpoint.geometry.coordinates[0] += .0001
+  }
+  else if(event.keyCode == 87) {
+    testpoint.geometry.coordinates[1] += .0001
+  }
+  else if(event.keyCode == 83) {
+    testpoint.geometry.coordinates[1] -= .0001
+  }
+  map.getSource('pointSource').setData(testpoint);
+  update_audio();
+})
+
+function update_audio() {
+  console.log(testpoint);
+  gps = point([testpoint.geometry.coordinates[0], testpoint.geometry.coordinates[1]]);
+  // gps = point([longitude, latitude]);
+
+  const closeTen = rankAudios().slice(0, 10);
+  audioNodes.forEach((node, idx) => {
+    // const rankSrc = `./sounds/${closeTen[idx].properties.filename}`
+    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/sounds/${closeTen[idx].properties.filename}`
+    if(node.src !== rankSrc && node.volume===0){
+      node.src = rankSrc;
+      node.volume = 0;
+      node.oncanplaythrough = () => node.play();
+    }
+    // audioNodes[idx].src = `./sounds/${soundFeatures.properties.filename}`;
+    const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
+    node.volume = dist2volume(dist, 0.07);
+  });
+  console.log(closeTen);
+};
