@@ -6,6 +6,7 @@ import { RecordingToggle } from './recording';
 const numAudioNodes = 10;
 const audioNodes = [];
 let gps;
+let pos_increment = .00001
 
 for (let i = 0; i < numAudioNodes; i++) {
   const node = new Audio();
@@ -90,7 +91,7 @@ geolocate.on('geolocate', (e) => {
   const closeTen = rankAudios().slice(0, 10);
   audioNodes.forEach((node, idx) => {
     // const rankSrc = `./sounds/${closeTen[idx].properties.filename}`
-    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/sounds/${closeTen[idx].properties.filename}`
+    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
     if(node.src !== rankSrc && node.volume===0){
       node.src = rankSrc;
       node.volume = 0;
@@ -133,17 +134,26 @@ map.on('load', () => {
 });
 
 document.addEventListener('keydown', function(event) {
+  
   if(event.keyCode == 65) {
-    testpoint.geometry.coordinates[0] -= .0001
+    testpoint.geometry.coordinates[0] -= pos_increment
   }
   else if(event.keyCode == 68) {
-    testpoint.geometry.coordinates[0] += .0001
+    testpoint.geometry.coordinates[0] += pos_increment
   }
   else if(event.keyCode == 87) {
-    testpoint.geometry.coordinates[1] += .0001
+    testpoint.geometry.coordinates[1] += pos_increment
   }
   else if(event.keyCode == 83) {
-    testpoint.geometry.coordinates[1] -= .0001
+    testpoint.geometry.coordinates[1] -= pos_increment
+  }
+  else if(event.keyCode == 189) {
+    pos_increment -= 0.00005;
+    console.log(pos_increment)
+  }
+  else if(event.keyCode == 187) {
+    pos_increment += 0.00005;
+    console.log(pos_increment)
   }
   map.getSource('pointSource').setData(testpoint);
   update_audio();
@@ -157,7 +167,7 @@ function update_audio() {
   const closeTen = rankAudios().slice(0, 10);
   audioNodes.forEach((node, idx) => {
     // const rankSrc = `./sounds/${closeTen[idx].properties.filename}`
-    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/sounds/${closeTen[idx].properties.filename}`
+    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
     if(node.src !== rankSrc && node.volume===0){
       node.src = rankSrc;
       node.volume = 0;

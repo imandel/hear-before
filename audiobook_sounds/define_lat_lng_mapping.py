@@ -5,7 +5,7 @@ directories = [_dir for _dir in os.listdir() if "." not in _dir] # I hate myself
 file_paths = []
 
 for _dir in directories:
-    file_paths += os.listdir(_dir)
+    file_paths += [f'audiobook_sounds/{_dir}/{fp}' for fp in os.listdir(_dir)]
 
 latlngs = []
 
@@ -22,5 +22,6 @@ latlngs_updated_mappings = [[r[0], r[1], extended_filepaths[i]] for i, r in enum
 
 with open('latlng_mapping_update.csv', 'w+', newline='') as csvfile:
     writer = csv.writer(csvfile, delimiter=',')
+    writer.writerow(['lat','lng','filename'])
     for row in latlngs_updated_mappings:
         writer.writerow(row)
