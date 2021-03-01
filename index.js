@@ -88,7 +88,7 @@ geolocate.on('geolocate', (e) => {
 
   const closeTen = rankAudios().slice(0, 10);
   audioNodes.forEach((node, idx) => {
-    const rankSrc = `./sounds/${closeTen[idx].properties.filename}`
+    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/sounds/${closeTen[idx].properties.filename}`
     if(node.src !== rankSrc && node.volume===0){
       node.src = rankSrc;
       node.volume = 0;

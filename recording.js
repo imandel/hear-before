@@ -1,17 +1,50 @@
 import MicroModal from 'micromodal';
 import WaveSurfer from 'wavesurfer.js';
 import MicrophonePlugin from 'wavesurfer.js/src/plugin/microphone';
+import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
+
+// everyone gets the polyfill screw it
+// import AudioRecorder from 'audio-recorder-polyfill';
+
+// window.MediaRecorder = AudioRecorder;
+
+const REGION = 'us-east-1';
+const BUCKET = 'hear-before-nyc';
+
+const s3 = new S3Client({
+  region: REGION,
+  credentials: fromCognitoIdentityPool({
+    client: new CognitoIdentityClient({ region: REGION }),
+    identityPoolId: 'us-east-1:e0492f61-36b6-4f08-822d-b122d0947a16', // IDENTITY_POOL_ID
+  }),
+});
+
+const uploadFile = async () => {
+  const uploadParams = {
+    Bucket: BUCKET,
+    Key: 'uploads/test.txt',
+    Body: 'this is a test pls',
+  };
+
+  try {
+    const data = await s3.send(new PutObjectCommand(uploadParams));
+    alert('that worked')
+  } catch (err) {
+    return alert("There was an error uploading file: ", err.message);
+  }
+};
 
 // TODO add ability to upload an audio file;
 // TODO mute all audionodes before recording/showing modal
-
 
 const downloadAudio = (url) => {
   const a = document.createElement('a');
   document.body.appendChild(a);
   a.style = 'display: none';
   a.href = url;
-  a.download = 'audio.ogg';
+  a.download = 'audio.mp4';
   a.click();
 };
 
@@ -27,6 +60,7 @@ const setupAudio = (start, play, download, wave) => {
         let chunks = [];
         const mediaRecorder = new MediaRecorder(stream);
         start.onclick = () => {
+          console.log('clicked')
           if (start.classList.contains('clicked')) {
             console.log('stop recording');
             mediaRecorder.stop();
@@ -50,7 +84,10 @@ const setupAudio = (start, play, download, wave) => {
         };
 
         mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'audio/ogg; codecs=opus' });
+          console.log('stopped')
+          const blob = new Blob(chunks, {
+            type: 'audio/mp4',
+          });
           chunks = [];
           const url = URL.createObjectURL(blob);
           download.onclick = () => downloadAudio(url);
@@ -58,6 +95,7 @@ const setupAudio = (start, play, download, wave) => {
           audio = new Audio(url);
           wave.load(audio);
           play.onclick = () => {
+            console.log('playing')
             wave.play();
           };
         };
@@ -66,7 +104,7 @@ const setupAudio = (start, play, download, wave) => {
         console.log(`The following getUserMedia error occurred: ${err}`);
       });
   } else {
-    console.log('getUserMedia not supported on your browser!');
+    alert('You may need to update to the latest version of your browser!');
   }
 };
 
@@ -83,6 +121,8 @@ class RecordingToggle {
     this._btn['aria-label'] = 'Toggle Recording';
     MicroModal.init();
     this._btn.onclick = () => {
+      // console.log('trying upload');
+      // uploadFile();
       if (!_this._btn.classList.contains('recording')) {
         _this._btn.classList.toggle('recording');
         console.log('recording');
