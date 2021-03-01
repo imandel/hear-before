@@ -4,14 +4,11 @@ import MicrophonePlugin from 'wavesurfer.js/src/plugin/microphone';
 import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
-
-// everyone gets the polyfill screw it
-// import AudioRecorder from 'audio-recorder-polyfill';
-
-// window.MediaRecorder = AudioRecorder;
+import { Howl, Howler } from 'howler';
 
 const REGION = 'us-east-1';
 const BUCKET = 'hear-before-nyc';
+let streamID;
 
 const s3 = new S3Client({
   region: REGION,
@@ -30,13 +27,12 @@ const uploadFile = async () => {
 
   try {
     const data = await s3.send(new PutObjectCommand(uploadParams));
-    alert('that worked')
+    alert('that worked');
   } catch (err) {
-    return alert("There was an error uploading file: ", err.message);
+    return alert('There was an error uploading file: ', err.message);
   }
 };
 
-// TODO add ability to upload an audio file;
 // TODO mute all audionodes before recording/showing modal
 
 const downloadAudio = (url) => {
@@ -57,10 +53,11 @@ const setupAudio = (start, play, download, wave) => {
     console.log('getUserMedia supported.');
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then((stream) => {
+        streamID = stream;
         let chunks = [];
         const mediaRecorder = new MediaRecorder(stream);
         start.onclick = () => {
-          console.log('clicked')
+          console.log('clicked');
           if (start.classList.contains('clicked')) {
             console.log('stop recording');
             mediaRecorder.stop();
@@ -83,20 +80,30 @@ const setupAudio = (start, play, download, wave) => {
           chunks.push(e.data);
         };
 
+        mediaRecorder.onstart = (e) => console.log('started mr');
+
         mediaRecorder.onstop = () => {
-          console.log('stopped')
-          const blob = new Blob(chunks, {
-            type: 'audio/mp4',
-          });
+          console.log('stopped');
+          const blob = new Blob(chunks);
+          // {
+          //   type: 'audio/mp4',
+          // });
           chunks = [];
           const url = URL.createObjectURL(blob);
+
           download.onclick = () => downloadAudio(url);
           download.disabled = false;
-          audio = new Audio(url);
-          wave.load(audio);
-          play.onclick = () => {
-            console.log('playing')
-            wave.play();
+          // audio = new Audio(url);
+          console.log(url);
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onloadend = () => {
+            const base64data = reader.result;
+            audio = new Howl({
+              src: [base64data],
+            });
+
+            wave.load(base64data);
           };
         };
       })
@@ -113,6 +120,7 @@ class RecordingToggle {
     const _this = this;
     const record = document.querySelector('#modal-1 > div > div > footer > button:nth-child(1)');
     const play = document.querySelector('#modal-1 > div > div > footer > button:nth-child(2)');
+    const localInput = document.querySelector('#file-input');
     const download = document.querySelector('#modal-1 > div > div > footer > button:nth-child(3)');
     let wavesurfer;
     this._btn = document.createElement('button');
@@ -130,6 +138,9 @@ class RecordingToggle {
           onClose() {
             _this._btn.classList.toggle('recording');
             wavesurfer.destroy();
+            streamID.getTracks().forEach((track) => {
+              track.stop();
+            });
           },
         });
         wavesurfer = WaveSurfer.create({
@@ -145,9 +156,25 @@ class RecordingToggle {
             MicrophonePlugin.create(),
           ],
         });
+        play.onclick = () => {
+            console.log('playing');
+            wavesurfer.play();
+          };
         setupAudio(record, play, download, wavesurfer);
-        // record.onclick = () => wavesurfer.microphone.start();
-        // stop.onclick = () => wavesurfer.microphone.stop();
+        localInput.onchange = (e) => {
+          if (localInput.files > 0) {
+            console.log('selected file')
+            const file = localInput.files[0];
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => {
+              const data = reader.result;
+              wavesurfer.load(data);
+              play.disabled = false;
+            };
+          }
+        };
       } else {
         MicroModal.close('modal-1');
       }
