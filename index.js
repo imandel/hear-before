@@ -10,6 +10,8 @@ let gps;
 for (let i = 0; i < numAudioNodes; i++) {
   const node = new Audio();
   node.volume = 0;
+  // testing silence fix
+  node.src = 'https://hear-before-nyc.s3.amazonaws.com/sounds/1sSilent.mp3';
   node.onended = () => { setTimeout(() => { node.play(); }, 2000); };
   audioNodes.push(node);
 }
@@ -88,7 +90,7 @@ geolocate.on('geolocate', (e) => {
 
   const closeTen = rankAudios().slice(0, 10);
   audioNodes.forEach((node, idx) => {
-    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/sounds/${closeTen[idx].properties.filename}`
+    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
     if(node.src !== rankSrc && node.volume===0){
       node.src = rankSrc;
       node.volume = 0;
@@ -106,7 +108,9 @@ map.addControl(new RecordingToggle(), 'top-right');
 
 map.on('load', () => {
   // this was for testing the audio dropoff
-  // geolocate._geolocateButton.onclick = () => {
+  geolocate._geolocateButton.onclick = () => {
+    audioNodes.forEach((audio) => audio.play());
+    };
   // audio.src = './benett_test.m4a';
   // audio.currentTime = 40;
   // audio.volume = 0;
