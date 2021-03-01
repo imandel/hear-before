@@ -17,7 +17,7 @@ let gps;
 
 for (let i = 0; i < numAudioNodes; i++) {
   const node = new Howl({
-    src: ['https://hear-before-nyc.s3.amazonaws.com/audiobook_sounds/knickerbockershistorynyvol1/knickerbockershistorynyvol1_chpt_6_segment_5.mp3'],
+    src: ['https://hear-before-nyc.s3.amazonaws.com/sounds/1sSilent.mp3'],
     autoplay: true,
     loop: false,
     volume: 0,
@@ -105,18 +105,21 @@ geolocate.on('geolocate', (e) => {
   console.log(closeTen);
   audioNodes.forEach((node, idx) => {
     const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
-    console.log(rankSrc);
-    if(node.src !== rankSrc && node.volume===0){
-      node.changeSrc(rankSrc);
-      node.once('load', node.play);
+    if(node._src !== rankSrc && node._volume===0){
+        const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
+        node = new Howl({
+          src: [rankSrc],
+          autoplay: true,
+          loop: false,
+          volume: dist2volume(dist, 0.07),
+          onend: function() {
+            setTimeout(() => { node.play(); }, 2000); 
+          }
+        }
+      );
+      audioNodes[idx] = node;
     }
-    // audioNodes[idx].src = `./sounds/${soundFeatures.properties.filename}`;
-    const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
-    node.volume(dist2volume(dist, 0.07)+0.01);
-
-    console.log(node);
   });
-  // console.log(closeTen);
 });
 
 map.addControl(geolocate);
