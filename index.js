@@ -2,27 +2,33 @@ import mapboxgl from 'mapbox-gl';
 import { point } from '@turf/helpers';
 import distance from '@turf/distance';
 import { RecordingToggle } from './recording';
+import {Howl, Howler} from 'howler';
+
+
+// prototype to update the SRC for the audio in a howl
+Howl.prototype.changeSrc = function (newSrc) {
+  let self = this;
+  self.unload();
+  self._src = newSrc;
+  self.load();
+}
 
 const numAudioNodes = 10;
 const audioNodes = [];
 let gps;
 
+// maybe we don't need this anymore
 for (let i = 0; i < numAudioNodes; i++) {
-  const node = new Audio();
-  node.volume = 0;
-  // testing silence fix
-  node.src = 'https://hear-before-nyc.s3.amazonaws.com/sounds/1sSilent.mp3';
-  node.onended = () => { setTimeout(() => { node.play(); }, 2000); };
+  const node = new Howl({
+    src: ['https://hear-before-nyc.s3.amazonaws.com/sounds/1sSilent.mp3'],
+    autoplay: true,
+    loop: false,
+    volume: 0,
+  }
+  );
   audioNodes.push(node);
 }
 
-setInterval(() => {
-  audioNodes.forEach((node) => {
-    if (node.volume!== 0) {
-      console.log('src: ', node.src, ', vol:', node.volume);
-    }
-  });
-}, 500);
 
 
 const audio = new Audio();
@@ -33,7 +39,7 @@ window.audio = audio;
 const testpoint = point([-73.95630, 40.75617]);
 
 // testing easeinCirc
-const scaleAudio = (vol) => 1 - Math.sqrt(1 - vol ** 2);
+const scaleAudio = (vol) => 1.0 - (1 - vol ** 2)**0.5;
 
 // dist to audio source
 // audioStart is distance you start hearing anything
@@ -45,17 +51,6 @@ const stepmillis = 700;
 for (let i = -0.1; i < 0.1; i += 0.002) {
   steps.push(Math.abs(i));
 }
-
-// This would be mapped to distances but wanted to test the function of walking by an audio source
-// audio.onplay = () => {
-//   steps.forEach((step, stepIdx) => {
-//     setTimeout(() => {
-//       const vol = dist2volume(step, 0.07);
-//       console.log('dist: ', step, 'vol: ', vol);
-//       audio.volume = vol;
-//     }, stepmillis * stepIdx);
-//   });
-// };
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiaW1hbmRlbCIsImEiOiJjankxdjU4ODMwYTViM21teGFpenpsbmd1In0.IN9K9rp8-I5pTbYTmwRJ4Q';
 const map = new mapboxgl.Map({
@@ -87,35 +82,58 @@ const rankAudios = () => {
 geolocate.on('geolocate', (e) => {
   const { latitude, longitude } = e.coords;
   gps = point([longitude, latitude]);
-
+  console.log('version 1.2 attempt to switch to howler')
   const closeTen = rankAudios().slice(0, 10);
+
+  // for making the closest node slightly louder
+  let closest_node = null;
+  let closeset_distance = null;
+
   audioNodes.forEach((node, idx) => {
+
     const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
-    if(node.src !== rankSrc && node.volume===0){
-      node.src = rankSrc;
-      node.volume = 0;
-      node.oncanplaythrough = () => node.play();
+
+    if(node._src !== rankSrc && node._volume===0){
+
+        // get distance for volumen adjustments 
+        const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
+
+        // define the new howl
+        node = new Howl({
+          src: [rankSrc],
+          autoplay: true,
+          loop: false,
+          volume: dist2volume(dist, 0.07),
+          onend: function() {
+            setTimeout(() => { node.play(); }, 2000); 
+          }
+        });
+
+        // update the closest node pointer w closest distance
+        if (closest_node === null || dist < closeset_distance) {
+          closeset_distance = dist;
+          closest_node = node;
+        }
+
+        // update audioNodes to use the new howl obj
+        audioNodes[idx] = node;
     }
-    // audioNodes[idx].src = `./sounds/${soundFeatures.properties.filename}`;
-    const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
-    node.volume = dist2volume(dist, 0.07);
+    
+    if (closest_node != null){
+      closest_node.volume(dist2volume(closeset_distance, 0.07) + 0.1); // bump the closest node to be a bit louder
+    }
   });
-  // console.log(closeTen);
 });
 
 map.addControl(geolocate);
 map.addControl(new RecordingToggle(), 'top-right');
 
 map.on('load', () => {
+  
   // this was for testing the audio dropoff
   geolocate._geolocateButton.onclick = () => {
     audioNodes.forEach((audio) => audio.play());
     };
-  // audio.src = './benett_test.m4a';
-  // audio.currentTime = 40;
-  // audio.volume = 0;
-  // audio.play();
-  // };
 
   map.addSource('pointSource', {
     type: 'geojson',
