@@ -103,10 +103,17 @@ geolocate.on('geolocate', (e) => {
   console.log('version 1.2 attempt to switch to howler')
   const closeTen = rankAudios().slice(0, 10);
   console.log(closeTen);
+
+  // for making the closest node slightly louder
+  let closest_node = null;
+  let closeset_distance = null;
+
   audioNodes.forEach((node, idx) => {
     const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
     if(node._src !== rankSrc && node._volume===0){
+
         const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
+
         node = new Howl({
           src: [rankSrc],
           autoplay: true,
@@ -115,10 +122,16 @@ geolocate.on('geolocate', (e) => {
           onend: function() {
             setTimeout(() => { node.play(); }, 2000); 
           }
+        });
+
+        if (closest_node === null || dist < closeset_distance) {
+          closeset_distance = dist;
+          closest_node = node;
         }
-      );
+
       audioNodes[idx] = node;
     }
+    closest_node.volume(dist2volume(closeset_distance, 0.07) + 0.1); // bump the closest node to be a bit louder
   });
 });
 
