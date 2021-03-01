@@ -18,7 +18,7 @@ for (let i = 0; i < numAudioNodes; i++) {
 setInterval(() => {
   audioNodes.forEach((node) => {
     if (node.volume!== 0) {
-      console.log('src: ', node.src, ', vol:', node.volume);
+      // console.log('src: ', node.src, ', vol:', node.volume); .
     }
   });
 }, 500);
@@ -84,7 +84,8 @@ const rankAudios = () => {
 
 geolocate.on('geolocate', (e) => {
   const { latitude, longitude } = e.coords;
-  console.log(testpoint);
+  console.log("version 1.0")
+  console.log(e);
   gps = point([testpoint.geometry.coordinates[0], testpoint.geometry.coordinates[1]]);
   // gps = point([longitude, latitude]);
 
@@ -100,8 +101,8 @@ geolocate.on('geolocate', (e) => {
     // audioNodes[idx].src = `./sounds/${soundFeatures.properties.filename}`;
     const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
     node.volume = dist2volume(dist, 0.07);
+    console.log('node_value:',node);
   });
-  console.log(closeTen);
 });
 
 map.addControl(geolocate);
@@ -160,7 +161,6 @@ document.addEventListener('keydown', function(event) {
 })
 
 function update_audio() {
-  console.log(testpoint);
   gps = point([testpoint.geometry.coordinates[0], testpoint.geometry.coordinates[1]]);
   // gps = point([longitude, latitude]);
 
@@ -177,5 +177,4 @@ function update_audio() {
     const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
     node.volume = dist2volume(dist, 0.07);
   });
-  console.log(closeTen);
 };
