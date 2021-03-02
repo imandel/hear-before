@@ -1,14 +1,17 @@
 Hear, Before 
 
 Features
+	
 	PRIORITY:
-        1. Recording Upload
-        2. Upload Approval (basic) tooling
-        3. Welcome modal
-        4. Accessibility for audio dropout
-        5. Accessibility for text and button tags 
-        6. Styling
-        7. Caching
+        1. Recording Upload - Ilan
+        2. Upload Approval (basic) tooling w some kind of security- Amrit
+        3. Welcome modal - Ilan
+        4. Accessibility for audio dropout - david
+        5. Text2speech pipeline - David 
+        6. <br>
+        7. Styling
+        8. Caching
+        9. Accessibility button tags 
 
 Recording Upload
 	- Switch to Howler 
@@ -42,8 +45,8 @@ Change styling for audio indication
 Bugs/Testing	
 
 PRIORITY:
-        1. WASD
-        2. Dropout Curve
+        1. WASD - Amrit
+        2. Dropout Curve - David ?
 
 Audio dropout Curve 
 	- option to play nearest only
@@ -56,20 +59,20 @@ How much content do we need?
  	- streets & parks
 	- non one-to-one mappings
 
-Figure out how many points we need in order to have good coverage of content in the city
+Figure out how many points we need in order to have good coverage of content in the city - Ilan
 
 Content Ideas:
 	- Synthesized audio:
-		- old news text 
+		- old news text - David
 		- news archive - https://news.google.com/newspapers?nid=KEtq3P1Vf8oC&dat=19691204&printsec=frontpage&hl=en
 		- vintage styled map - https://blog.mapbox.com/designing-the-vintage-style-in-mapbox-studio-9da4aa2a627f
-        - NYC historic arcades 
-        - Metropolitan Diaries speech2texted
+        - NYC historic arcades - Amrit
+        - Metropolitan Diaries - Amrit
         - Poetry sites https://hellopoetry.com/
     - Found Audio
-        - People busking in MTA stations
+        - People busking in MTA stations - Amrit
         - Piped audio for historic riots/speeches
-        - Graveyard spooky sounds
+        - Graveyard spooky sounds - Ilan
 	- Ask Ilan’s open mic curator friend for poem recordings
 	- Pay people?
 
