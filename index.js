@@ -90,12 +90,9 @@ let update_audio = (pt) => {
   audioNodes.forEach((node, idx) => {
 
     const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
-
+    // get distance for volumen adjustments 
+    const dist = distance(pt, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
     if(node._src !== rankSrc && node._volume===0){
-
-        // get distance for volumen adjustments 
-        const dist = distance(pt, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
-
         // define the new howl
         node = new Howl({
           src: [rankSrc],
@@ -116,10 +113,7 @@ let update_audio = (pt) => {
         // update audioNodes to use the new howl obj
         audioNodes[idx] = node;
     }
-    
-    if (closest_node != null){
-      closest_node.volume(dist2volume(closeset_distance, 0.07) + 0.1); // bump the closest node to be a bit louder
-    }
+    node.volume(dist2volume(dist, 0.07));
   });
 }
 
@@ -180,8 +174,8 @@ document.addEventListener('keydown', function(event) {
     console.log(pos_increment)
   }
   
-  const latitude = testpoint.geometry.coordinates[0];
-  const longitude = testpoint.geometry.coordinates[1];
+  const latitude = testpoint.geometry.coordinates[1];
+  const longitude = testpoint.geometry.coordinates[0];
 
   let pt = point([longitude, latitude]);
   map.getSource('pointSource').setData(testpoint);
