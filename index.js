@@ -92,7 +92,7 @@ let update_audio = (pt) => {
     const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
     // get distance for volumen adjustments 
     const dist = distance(pt, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
-    if(node._src !== rankSrc && node._volume===0){
+    if(node._src !== rankSrc){
         // define the new howl
         node = new Howl({
           src: [rankSrc],
