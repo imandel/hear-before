@@ -13,5 +13,3 @@ For synethetic geom data, navigate to the directory and run `python generate_syn
 ofc to `pip install -r requirements.txt` too.
 ### TODO
 * How do we want to deal with multiple audio files in a location? play all at once? play closest until completion?
-
-* 

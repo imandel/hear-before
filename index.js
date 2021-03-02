@@ -29,14 +29,15 @@ for (let i = 0; i < numAudioNodes; i++) {
   audioNodes.push(node);
 }
 
+console.log('version 1.2 attempt to switch to howler')
 
-
-const audio = new Audio();
-audio.src = './benett_test.m4a';
-audio.currentTime = 40;
-// audio.volume = 0;
-window.audio = audio;
+// const audio = new Audio();
+// audio.src = './benett_test.m4a';
+// audio.currentTime = 40;
+// // audio.volume = 0;
+// window.audio = audio;
 const testpoint = point([-73.95630, 40.75617]);
+let pos_increment = 0.00001;
 
 // testing easeinCirc
 const scaleAudio = (vol) => 1.0 - (1 - vol ** 2)**0.5;
@@ -68,22 +69,19 @@ const geolocate = new mapboxgl.GeolocateControl({
   compact: true,
 });
 
-const rankAudios = () => {
+const rankAudios = (pt) => {
   const features = map.queryRenderedFeatures({ layers: ['audio-samples'] });
 
   features.sort((a, b) => {
-    const dist1 = distance(point([a.properties.lng, a.properties.lat]), gps);
-    const dist2 = distance(point([b.properties.lng, b.properties.lat]), gps);
+    const dist1 = distance(point([a.properties.lng, a.properties.lat]), pt);
+    const dist2 = distance(point([b.properties.lng, b.properties.lat]), pt);
     return dist1 - dist2;
   });
   return features;
 };
 
-geolocate.on('geolocate', (e) => {
-  const { latitude, longitude } = e.coords;
-  gps = point([longitude, latitude]);
-  console.log('version 1.2 attempt to switch to howler')
-  const closeTen = rankAudios().slice(0, 10);
+let update_audio = (pt) => {
+  const closeTen = rankAudios(pt).slice(0, 10);
 
   // for making the closest node slightly louder
   let closest_node = null;
@@ -96,7 +94,7 @@ geolocate.on('geolocate', (e) => {
     if(node._src !== rankSrc && node._volume===0){
 
         // get distance for volumen adjustments 
-        const dist = distance(gps, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
+        const dist = distance(pt, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
 
         // define the new howl
         node = new Howl({
@@ -123,6 +121,12 @@ geolocate.on('geolocate', (e) => {
       closest_node.volume(dist2volume(closeset_distance, 0.07) + 0.1); // bump the closest node to be a bit louder
     }
   });
+}
+
+geolocate.on('geolocate', (e) => {
+  const { latitude, longitude } = e.coords;
+  gps = point([longitude, latitude]);
+  update_audio(gps)
 });
 
 map.addControl(geolocate);
@@ -151,3 +155,35 @@ map.on('load', () => {
     },
   });
 });
+
+// add WASD functionality
+document.addEventListener('keydown', function(event) {
+
+  if(event.keyCode == 65) {
+    testpoint.geometry.coordinates[0] -= pos_increment
+  }
+  else if(event.keyCode == 68) {
+    testpoint.geometry.coordinates[0] += pos_increment
+  }
+  else if(event.keyCode == 87) {
+    testpoint.geometry.coordinates[1] += pos_increment
+  }
+  else if(event.keyCode == 83) {
+    testpoint.geometry.coordinates[1] -= pos_increment
+  }
+  else if(event.keyCode == 189) {
+    pos_increment -= 0.00005;
+    console.log(pos_increment)
+  }
+  else if(event.keyCode == 187) {
+    pos_increment += 0.00005;
+    console.log(pos_increment)
+  }
+  
+  const latitude = testpoint.geometry.coordinates[0];
+  const longitude = testpoint.geometry.coordinates[1];
+
+  let pt = point([longitude, latitude]);
+  map.getSource('pointSource').setData(testpoint);
+  update_audio(pt);
+})
