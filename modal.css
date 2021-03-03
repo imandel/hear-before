@@ -163,6 +163,7 @@ background-color: #bdbdbd;
 
 #file-input {
 opacity: 0;
+padding-bottom: .5rem;
 }
 
 .secondary {
@@ -182,6 +183,7 @@ opacity: 0;
   overflow: visible;
   line-height: 1.15;
   margin: 0;
+  margin-bottom: .5rem; 
   will-change: transform;
   -moz-osx-font-smoothing: grayscale;
   -webkit-backface-visibility: hidden;
@@ -191,6 +193,15 @@ opacity: 0;
   transition: -webkit-transform .25s ease-out;
   transition: transform .25s ease-out;
   transition: transform .25s ease-out,-webkit-transform .25s ease-out;
+  padding-bottom: .5rem;
+}
+
+.modal__textarea {
+  resize: none;
+  padding-top: .5rem;
+  width: 100%;
+  display: none;
+  transition: all 0.5s ease-out;
 }
 
 @media only screen and (max-width: 600px) {
