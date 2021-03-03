@@ -16,7 +16,6 @@ import { Howl, Howler } from 'howler';
     let audioURI;
     let audioBlob;
     let type;
-// TODO mute all audionodes before recording/showing modal
 
 // for testing
 // const downloadAudio = (url) => {
@@ -170,6 +169,7 @@ class RecordingToggle {
           lat = position.coords.latitude;
           lng = position.coords.longitude;
         });
+        MicroModal.close('modal-2');
         MicroModal.show('modal-1', {
           onClose: () => {
             _this._btn.classList.toggle('recording');
