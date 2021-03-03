@@ -1,17 +1,16 @@
 import mapboxgl from 'mapbox-gl';
 import { point } from '@turf/helpers';
 import distance from '@turf/distance';
+import { Howl, Howler } from 'howler';
 import { RecordingToggle } from './recording';
-import {Howl, Howler} from 'howler';
-
 
 // prototype to update the SRC for the audio in a howl
 Howl.prototype.changeSrc = function (newSrc) {
-  let self = this;
+  const self = this;
   self.unload();
   self._src = newSrc;
   self.load();
-}
+};
 
 const numAudioNodes = 10;
 const audioNodes = [];
@@ -24,12 +23,11 @@ for (let i = 0; i < numAudioNodes; i++) {
     autoplay: true,
     loop: false,
     volume: 0,
-  }
-  );
+  });
   audioNodes.push(node);
 }
 
-console.log('version 1.2 attempt to switch to howler')
+console.log('version 1.2 attempt to switch to howler');
 
 // const audio = new Audio();
 // audio.src = './benett_test.m4a';
@@ -40,7 +38,7 @@ const testpoint = point([-73.95630, 40.75617]);
 let pos_increment = 0.00001;
 
 // testing easeinCirc
-const scaleAudio = (vol) => 1.0 - (1 - vol ** 2)**0.5;
+const scaleAudio = (vol) => 1.0 - (1 - vol ** 2) ** 0.5;
 
 // dist to audio source
 // audioStart is distance you start hearing anything
@@ -80,7 +78,7 @@ const rankAudios = (pt) => {
   return features;
 };
 
-let update_audio = (pt) => {
+const update_audio = (pt) => {
   const closeTen = rankAudios(pt).slice(0, 10);
 
   // for making the closest node slightly louder
@@ -88,50 +86,48 @@ let update_audio = (pt) => {
   let closeset_distance = null;
 
   audioNodes.forEach((node, idx) => {
-
-    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
-    // get distance for volumen adjustments 
+    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`;
+    // get distance for volumen adjustments
     const dist = distance(pt, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
-    if(node._src !== rankSrc){
-        // define the new howl
-        node = new Howl({
-          src: [rankSrc],
-          autoplay: true,
-          loop: false,
-          volume: dist2volume(dist, 0.07),
-          onend: function() {
-            setTimeout(() => { node.play(); }, 2000); 
-          }
-        });
+    if (node._src !== rankSrc) {
+      // define the new howl
+      node = new Howl({
+        src: [rankSrc],
+        autoplay: true,
+        loop: false,
+        volume: dist2volume(dist, 0.07),
+        onend() {
+          setTimeout(() => { node.play(); }, 2000);
+        },
+      });
 
-        // update the closest node pointer w closest distance
-        if (closest_node === null || dist < closeset_distance) {
-          closeset_distance = dist;
-          closest_node = node;
-        }
+      // update the closest node pointer w closest distance
+      if (closest_node === null || dist < closeset_distance) {
+        closeset_distance = dist;
+        closest_node = node;
+      }
 
-        // update audioNodes to use the new howl obj
-        audioNodes[idx] = node;
+      // update audioNodes to use the new howl obj
+      audioNodes[idx] = node;
     }
     node.volume(dist2volume(dist, 0.07));
   });
-}
+};
 
 geolocate.on('geolocate', (e) => {
   const { latitude, longitude } = e.coords;
   gps = point([longitude, latitude]);
-  update_audio(gps)
+  update_audio(gps);
 });
 
 map.addControl(geolocate);
 map.addControl(new RecordingToggle(), 'top-right');
 
 map.on('load', () => {
-  
   // this was for testing the audio dropoff
   geolocate._geolocateButton.onclick = () => {
     audioNodes.forEach((audio) => audio.play());
-    };
+  };
 
   map.addSource('pointSource', {
     type: 'geojson',
@@ -151,33 +147,27 @@ map.on('load', () => {
 });
 
 // add WASD functionality
-document.addEventListener('keydown', function(event) {
-
-  if(event.keyCode == 65) {
-    testpoint.geometry.coordinates[0] -= pos_increment
-  }
-  else if(event.keyCode == 68) {
-    testpoint.geometry.coordinates[0] += pos_increment
-  }
-  else if(event.keyCode == 87) {
-    testpoint.geometry.coordinates[1] += pos_increment
-  }
-  else if(event.keyCode == 83) {
-    testpoint.geometry.coordinates[1] -= pos_increment
-  }
-  else if(event.keyCode == 189) {
+document.addEventListener('keydown', (event) => {
+  if (event.keyCode == 65) {
+    testpoint.geometry.coordinates[0] -= pos_increment;
+  } else if (event.keyCode == 68) {
+    testpoint.geometry.coordinates[0] += pos_increment;
+  } else if (event.keyCode == 87) {
+    testpoint.geometry.coordinates[1] += pos_increment;
+  } else if (event.keyCode == 83) {
+    testpoint.geometry.coordinates[1] -= pos_increment;
+  } else if (event.keyCode == 189) {
     pos_increment -= 0.00005;
-    console.log(pos_increment)
-  }
-  else if(event.keyCode == 187) {
+    console.log(pos_increment);
+  } else if (event.keyCode == 187) {
     pos_increment += 0.00005;
-    console.log(pos_increment)
+    console.log(pos_increment);
   }
-  
+
   const latitude = testpoint.geometry.coordinates[1];
   const longitude = testpoint.geometry.coordinates[0];
 
-  let pt = point([longitude, latitude]);
+  const pt = point([longitude, latitude]);
   map.getSource('pointSource').setData(testpoint);
   update_audio(pt);
-})
+});
