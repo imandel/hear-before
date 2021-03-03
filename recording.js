@@ -6,37 +6,15 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
 import mime from 'mime';
 import { v4 as uuid } from 'uuid';
+import Swal from 'sweetalert2';
 
-const REGION = 'us-east-1';
-const BUCKET = 'hear-before-nyc';
-let streamID;
-let audioURI;
-let audioBlob;
-let type;
 
-const s3 = new S3Client({
-  region: REGION,
-  credentials: fromCognitoIdentityPool({
-    client: new CognitoIdentityClient({ region: REGION }),
-    identityPoolId: 'us-east-1:e0492f61-36b6-4f08-822d-b122d0947a16', // IDENTITY_POOL_ID
-  }),
-});
-
-const uploadFile = async (blob, name, meta) => {
-  const uploadParams = {
-    Bucket: BUCKET,
-    Key: `uploads/${name}`,
-    Body: blob,
-    Metadata: meta,
-  };
-
-  try {
-    await s3.send(new PutObjectCommand(uploadParams));
-  } catch (err) {
-    console.log('There was an error uploading file: ', err.message);
-  }
-};
-
+    const REGION = 'us-east-1';
+    const BUCKET = 'hear-before-nyc';
+    let streamID;
+    let audioURI;
+    let audioBlob;
+    let type;
 // TODO mute all audionodes before recording/showing modal
 
 // for testing
@@ -115,17 +93,49 @@ class RecordingToggle {
     const upload = document.querySelector('#modal-1 > div > div > footer > button:nth-child(3)');
     const textarea = document.querySelector('#modal-1 > div > div > footer > textarea');
     let wavesurfer;
-    let lat; let
-      lng;
+    let lat;
+    let lng;
     upload.onclick = () => {
-      uploadFile(audioBlob, `${uuid()}.${type}`,
-        // { lat: lat, lng: lng, comments: textarea.value}
-        { key: 'val' });
+      console.log('clicked');
+      console.log({ lat, lng, comments: textarea.value });
+      uploadFile(audioBlob, `${uuid()}.${type}`, { lat: lat.toString(), lng: lng.toString(), comments: textarea.value });
       wavesurfer.empty();
       upload.disabled = true;
       play.disabled = true;
     };
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 1000,
+    });
 
+    const s3 = new S3Client({
+      region: REGION,
+      credentials: fromCognitoIdentityPool({
+        client: new CognitoIdentityClient({ region: REGION }),
+        identityPoolId: 'us-east-1:e0492f61-36b6-4f08-822d-b122d0947a16', // IDENTITY_POOL_ID
+      }),
+    });
+    const uploadFile = async (blob, name, meta) => {
+      const uploadParams = {
+        Bucket: BUCKET,
+        Key: `uploads/${name}`,
+        Body: blob,
+        Metadata: meta,
+      };
+
+      try {
+        await s3.send(new PutObjectCommand(uploadParams));
+        console.log('success');
+        Toast.fire({
+          icon: 'success',
+          title: 'File Uploaded!',
+        });
+      } catch (err) {
+        console.log('There was an error uploading file: ', err.message);
+      }
+    };
     localInput.onchange = (e) => {
       if (localInput.files.length > 0) {
         audioBlob = localInput.files[0];
