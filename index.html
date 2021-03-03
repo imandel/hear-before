@@ -25,11 +25,13 @@
         </main>
         <footer class="modal__footer">
           <button class="modal__btn">Record</button>
-          <button class="modal__btn">Play</button>
-          <button class="modal__btn">Upload</button>
+          <button class="modal__btn" disabled>Play</button>
+          <button class="modal__btn" disabled>Upload</button>
           <br>
           <input type="file" id="file-input" accept="audio/*" hidden/>
           <label for="file-input" class="secondary">Or Choose File</label>
+          <br>
+          <textarea class="modal__textarea" maxlength="1500" placeholder="Tell us something about this sound?" rows="5"></textarea>
 <!--           <button class="modal__btn" data-micromodal-close aria-label="Close this dialog window">Close</button> -->
         </footer>
       </div>
