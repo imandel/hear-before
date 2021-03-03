@@ -2,7 +2,11 @@ import mapboxgl from 'mapbox-gl';
 import { point } from '@turf/helpers';
 import distance from '@turf/distance';
 import { Howl, Howler } from 'howler';
+import MicroModal from 'micromodal';
 import { RecordingToggle } from './recording';
+
+MicroModal.init();
+
 
 // prototype to update the SRC for the audio in a howl
 Howl.prototype.changeSrc = function (newSrc) {
@@ -15,7 +19,7 @@ Howl.prototype.changeSrc = function (newSrc) {
 const numAudioNodes = 10;
 const audioNodes = [];
 let gps;
-
+ window.audioNodes = audioNodes;
 // maybe we don't need this anymore
 for (let i = 0; i < numAudioNodes; i++) {
   const node = new Howl({
@@ -27,13 +31,6 @@ for (let i = 0; i < numAudioNodes; i++) {
   audioNodes.push(node);
 }
 
-console.log('version 1.2 attempt to switch to howler');
-
-// const audio = new Audio();
-// audio.src = './benett_test.m4a';
-// audio.currentTime = 40;
-// // audio.volume = 0;
-// window.audio = audio;
 const testpoint = point([-73.95630, 40.75617]);
 let pos_increment = 0.00001;
 
@@ -87,7 +84,7 @@ const update_audio = (pt) => {
 
   audioNodes.forEach((node, idx) => {
     const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`;
-    // get distance for volumen adjustments
+    // get distance for volume adjustments
     const dist = distance(pt, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
     if (node._src !== rankSrc) {
       // define the new howl
@@ -121,7 +118,7 @@ geolocate.on('geolocate', (e) => {
 });
 
 map.addControl(geolocate);
-map.addControl(new RecordingToggle(), 'top-right');
+map.addControl(new RecordingToggle(audioNodes), 'top-right');
 
 map.on('load', () => {
   // this was for testing the audio dropoff

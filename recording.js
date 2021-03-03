@@ -7,6 +7,7 @@ import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-id
 import mime from 'mime';
 import { v4 as uuid } from 'uuid';
 import Swal from 'sweetalert2';
+import { Howl, Howler } from 'howler';
 
 
     const REGION = 'us-east-1';
@@ -85,6 +86,9 @@ const setupAudio = (start, play, upload, wave) => {
 };
 
 class RecordingToggle {
+  constructor(audioNodes) {
+    this.audioNodes = audioNodes;
+  }
   onAdd(map) {
     const _this = this;
     const record = document.querySelector('#modal-1 > div > div > footer > button:nth-child(1)');
@@ -93,8 +97,8 @@ class RecordingToggle {
     const upload = document.querySelector('#modal-1 > div > div > footer > button:nth-child(3)');
     const textarea = document.querySelector('#modal-1 > div > div > footer > textarea');
     let wavesurfer;
-    let lat;
-    let lng;
+    let lat='';
+    let lng='';
     upload.onclick = () => {
       console.log('clicked');
       console.log({ lat, lng, comments: textarea.value });
@@ -151,14 +155,15 @@ class RecordingToggle {
         };
       }
     };
+
     this._btn = document.createElement('button');
     this._btn.className = 'mapboxgl-ctrl-icon mapboxgl-ctrl-rec';
     this._btn.type = 'button';
     this._btn['aria-label'] = 'Toggle Recording';
-    MicroModal.init();
     this._btn.onclick = () => {
       if (!_this._btn.classList.contains('recording')) {
         _this._btn.classList.toggle('recording');
+        this.audioNodes.forEach(node => node.mute(true));
         // this is super delayed and I'm not sure why
         navigator.geolocation.getCurrentPosition((position) => {
           console.log('recording got position');
@@ -166,13 +171,14 @@ class RecordingToggle {
           lng = position.coords.longitude;
         });
         MicroModal.show('modal-1', {
-          onClose() {
+          onClose: () => {
             _this._btn.classList.toggle('recording');
             wavesurfer.destroy();
             streamID.getTracks().forEach((track) => {
               track.stop();
             });
             upload.disabled = true;
+            this.audioNodes.forEach(node => node.mute(false));
           },
         });
         wavesurfer = WaveSurfer.create({
