@@ -52,7 +52,7 @@ for (let i = -0.1; i < 0.1; i += 0.002) {
 mapboxgl.accessToken = 'pk.eyJ1IjoiaW1hbmRlbCIsImEiOiJjankxdjU4ODMwYTViM21teGFpenpsbmd1In0.IN9K9rp8-I5pTbYTmwRJ4Q';
 const map = new mapboxgl.Map({
   container: 'map',
-  style: 'mapbox://styles/imandel/ckl2jd7kg1hvc17rxxxiwtk97',
+  style: 'mapbox://styles/imandel/ckltxkila2vov17lkz1b5kjym',
   center: [-73.946382, 40.724478],
   zoom: 12,
 });
@@ -146,14 +146,19 @@ map.on('load', () => {
 
 // add WASD functionality
 document.addEventListener('keydown', (event) => {
+  let relevant_key_tripped = false;
   if (event.keyCode == 65) {
     testpoint.geometry.coordinates[0] -= pos_increment;
+    relevant_key_tripped = true;
   } else if (event.keyCode == 68) {
     testpoint.geometry.coordinates[0] += pos_increment;
+    relevant_key_tripped = true;
   } else if (event.keyCode == 87) {
     testpoint.geometry.coordinates[1] += pos_increment;
+    relevant_key_tripped = true;
   } else if (event.keyCode == 83) {
     testpoint.geometry.coordinates[1] -= pos_increment;
+    relevant_key_tripped = true;
   } else if (event.keyCode == 189) {
     pos_increment -= 0.00005;
     console.log(pos_increment);
@@ -161,11 +166,12 @@ document.addEventListener('keydown', (event) => {
     pos_increment += 0.00005;
     console.log(pos_increment);
   }
-
-  const latitude = testpoint.geometry.coordinates[1];
-  const longitude = testpoint.geometry.coordinates[0];
-
-  const pt = point([longitude, latitude]);
-  map.getSource('pointSource').setData(testpoint);
-  update_audio(pt);
+  if (relevant_key_tripped){
+    const latitude = testpoint.geometry.coordinates[1];
+    const longitude = testpoint.geometry.coordinates[0];
+  
+    const pt = point([longitude, latitude]);
+    map.getSource('pointSource').setData(testpoint);
+    update_audio(pt);
+  }
 });
