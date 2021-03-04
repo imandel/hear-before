@@ -6,8 +6,7 @@ import MicroModal from 'micromodal';
 import { RecordingToggle } from './recording';
 
 MicroModal.init();
-MicroModal.show('modal-2')
-
+MicroModal.show('modal-2');
 
 // prototype to update the SRC for the audio in a howl
 Howl.prototype.changeSrc = function (newSrc) {
@@ -20,7 +19,7 @@ Howl.prototype.changeSrc = function (newSrc) {
 const numAudioNodes = 10;
 const audioNodes = [];
 let gps;
- window.audioNodes = audioNodes;
+window.audioNodes = audioNodes;
 // maybe we don't need this anymore
 for (let i = 0; i < numAudioNodes; i++) {
   const node = new Howl({
@@ -94,6 +93,7 @@ const update_audio = (pt) => {
         autoplay: true,
         loop: false,
         volume: dist2volume(dist, 0.07),
+        mute: document.getElementById('modal-1').classList.contains('is-open'),
         onend() {
           setTimeout(() => { node.play(); }, 2000);
         },
@@ -123,9 +123,9 @@ map.addControl(new RecordingToggle(audioNodes), 'top-right');
 
 map.on('load', () => {
   // this was for testing the audio dropoff
-  geolocate._geolocateButton.onclick = () => {
-    audioNodes.forEach((audio) => audio.play());
-  };
+  // geolocate._geolocateButton.onclick = () => {
+  //   audioNodes.forEach((audio) => audio.play());
+  // };
 
   map.addSource('pointSource', {
     type: 'geojson',
@@ -166,10 +166,10 @@ document.addEventListener('keydown', (event) => {
     pos_increment += 0.00005;
     console.log(pos_increment);
   }
-  if (relevant_key_tripped){
+  if (relevant_key_tripped) {
     const latitude = testpoint.geometry.coordinates[1];
     const longitude = testpoint.geometry.coordinates[0];
-  
+
     const pt = point([longitude, latitude]);
     map.getSource('pointSource').setData(testpoint);
     update_audio(pt);

@@ -9,23 +9,12 @@ import { v4 as uuid } from 'uuid';
 import Swal from 'sweetalert2';
 import { Howl, Howler } from 'howler';
 
-
-    const REGION = 'us-east-1';
-    const BUCKET = 'hear-before-nyc';
-    let streamID;
-    let audioURI;
-    let audioBlob;
-    let type;
-
-// for testing
-// const downloadAudio = (url) => {
-//   const a = document.createElement('a');
-//   document.body.appendChild(a);
-//   a.style = 'display: none';
-//   a.href = url;
-//   a.download = 'audio.mp4';
-//   a.click();
-// };
+const REGION = 'us-east-1';
+const BUCKET = 'hear-before-nyc';
+let streamID;
+let audioURI;
+let audioBlob;
+let type;
 
 const setupAudio = (start, play, upload, wave) => {
   play.disabled = true;
@@ -78,6 +67,11 @@ const setupAudio = (start, play, upload, wave) => {
       })
       .catch((err) => {
         console.log(`The following getUserMedia error occurred: ${err}`);
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'You may need to update your phone or browser to use this feature!',
+        });
       });
   } else {
     alert('You may need to update to the latest version of your browser!');
@@ -85,10 +79,15 @@ const setupAudio = (start, play, upload, wave) => {
 };
 
 class RecordingToggle {
+  // _audioNodes: audioNodes;
+  // _modalState: 'CLOSED' | 'OPEN'
+  
   constructor(audioNodes) {
     this.audioNodes = audioNodes;
   }
+
   onAdd(map) {
+    console.log(map)
     const _this = this;
     const record = document.querySelector('#modal-1 > div > div > footer > button:nth-child(1)');
     const play = document.querySelector('#modal-1 > div > div > footer > button:nth-child(2)');
@@ -96,8 +95,8 @@ class RecordingToggle {
     const upload = document.querySelector('#modal-1 > div > div > footer > button:nth-child(3)');
     const textarea = document.querySelector('#modal-1 > div > div > footer > textarea');
     let wavesurfer;
-    let lat='';
-    let lng='';
+    let lat = '';
+    let lng = '';
     upload.onclick = () => {
       console.log('clicked');
       console.log({ lat, lng, comments: textarea.value });
@@ -162,7 +161,7 @@ class RecordingToggle {
     this._btn.onclick = () => {
       if (!_this._btn.classList.contains('recording')) {
         _this._btn.classList.toggle('recording');
-        this.audioNodes.forEach(node => node.mute(true));
+        this.audioNodes.forEach((node) => node.mute(true));
         // this is super delayed and I'm not sure why
         navigator.geolocation.getCurrentPosition((position) => {
           console.log('recording got position');
@@ -172,13 +171,14 @@ class RecordingToggle {
         MicroModal.close('modal-2');
         MicroModal.show('modal-1', {
           onClose: () => {
+            console.log('close')
             _this._btn.classList.toggle('recording');
             wavesurfer.destroy();
             streamID.getTracks().forEach((track) => {
               track.stop();
             });
             upload.disabled = true;
-            this.audioNodes.forEach(node => node.mute(false));
+            this.audioNodes.forEach((node) => node.mute(false));
           },
         });
         wavesurfer = WaveSurfer.create({
@@ -200,7 +200,18 @@ class RecordingToggle {
         };
         setupAudio(record, play, upload, wavesurfer);
       } else {
-        MicroModal.close('modal-1');
+        MicroModal.close('modal-1', {
+          onClose: () => {
+            console.log('close')
+            _this._btn.classList.toggle('recording');
+            wavesurfer.destroy();
+            streamID.getTracks().forEach((track) => {
+              track.stop();
+            });
+            upload.disabled = true;
+            this.audioNodes.forEach((node) => node.mute(false));
+          },
+        });
       }
     };
 
