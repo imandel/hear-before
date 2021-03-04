@@ -81,7 +81,7 @@ const setupAudio = (start, play, upload, wave) => {
 class RecordingToggle {
   // _audioNodes: audioNodes;
   // _modalState: 'CLOSED' | 'OPEN'
-  
+
   constructor(audioNodes) {
     this.audioNodes = audioNodes;
   }
@@ -161,7 +161,7 @@ class RecordingToggle {
     this._btn.onclick = () => {
       if (!_this._btn.classList.contains('recording')) {
         _this._btn.classList.toggle('recording');
-        this.audioNodes.forEach((node) => node.mute(true));
+        this.audioNodes.forEach((node) => {node.mute(true)});
         // this is super delayed and I'm not sure why
         navigator.geolocation.getCurrentPosition((position) => {
           console.log('recording got position');

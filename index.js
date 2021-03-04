@@ -137,13 +137,15 @@ geolocate.on('geolocate', (e) => {
   gps = point([longitude, latitude]);
   update_audio(gps);
 });
-
+// Delegate functions:
 function setSA(val){
   SpatialAudioOn =val;
 }
 
+
+
 map.addControl(geolocate);
-map.addControl(new RecordingToggle(), 'top-right');
+map.addControl(new RecordingToggle(audioNodes), 'top-right');
 map.addControl(new SpatialAudioToggle(setSA), 'top-right');
 
 map.on('load', () => {
