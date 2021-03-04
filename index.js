@@ -5,7 +5,6 @@ import { Howl, Howler } from 'howler';
 import MicroModal from 'micromodal';
 import { RecordingToggle } from './recording';
 import { SpatialAudioToggle } from './spatialaudio';
-import {Howl, Howler} from 'howler';
 
 MicroModal.init();
 MicroModal.show('modal-2');
