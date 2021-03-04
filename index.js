@@ -1,14 +1,18 @@
 import mapboxgl from 'mapbox-gl';
 import { point } from '@turf/helpers';
 import distance from '@turf/distance';
+import { Howl, Howler } from 'howler';
+import MicroModal from 'micromodal';
 import { RecordingToggle } from './recording';
 import { SpatialAudioToggle } from './spatialaudio';
 import {Howl, Howler} from 'howler';
 
+MicroModal.init();
+MicroModal.show('modal-2');
 
 // prototype to update the SRC for the audio in a howl
 Howl.prototype.changeSrc = function (newSrc) {
-  let self = this;
+  const self = this;
   self.unload();
   self._src = newSrc;
   self.load();
@@ -26,23 +30,15 @@ for (let i = 0; i < numAudioNodes; i++) {
     autoplay: true,
     loop: false,
     volume: 0,
-  }
-  );
+  });
   audioNodes.push(node);
 }
 
-console.log('version 1.2 attempt to switch to howler')
-
-// const audio = new Audio();
-// audio.src = './benett_test.m4a';
-// audio.currentTime = 40;
-// // audio.volume = 0;
-// window.audio = audio;
 const testpoint = point([-73.95630, 40.75617]);
 let pos_increment = 0.00001;
 
 // testing easeinCirc
-const scaleAudio = (vol) => 1.0 - (1 - vol ** 2)**0.5;
+const scaleAudio = (vol) => 1.0 - (1 - vol ** 2) ** 0.5;
 
 // dist to audio source
 // audioStart is distance you start hearing anything
@@ -58,7 +54,7 @@ for (let i = -0.1; i < 0.1; i += 0.002) {
 mapboxgl.accessToken = 'pk.eyJ1IjoiaW1hbmRlbCIsImEiOiJjankxdjU4ODMwYTViM21teGFpenpsbmd1In0.IN9K9rp8-I5pTbYTmwRJ4Q';
 const map = new mapboxgl.Map({
   container: 'map',
-  style: 'mapbox://styles/imandel/ckl2jd7kg1hvc17rxxxiwtk97',
+  style: 'mapbox://styles/imandel/ckltxkila2vov17lkz1b5kjym',
   center: [-73.946382, 40.724478],
   zoom: 12,
 });
@@ -82,7 +78,7 @@ const rankAudios = (pt) => {
   return features;
 };
 
-let update_audio = (pt) => {
+const update_audio = (pt) => {
   const closeTen = rankAudios(pt).slice(0, 10);
 
   // for making the closest node slightly louder
@@ -140,7 +136,7 @@ let update_audio = (pt) => {
 geolocate.on('geolocate', (e) => {
   const { latitude, longitude } = e.coords;
   gps = point([longitude, latitude]);
-  update_audio(gps)
+  update_audio(gps);
 });
 
 function setSA(val){
@@ -154,9 +150,9 @@ map.addControl(new SpatialAudioToggle(setSA), 'top-right');
 map.on('load', () => {
 
   // this was for testing the audio dropoff
-  geolocate._geolocateButton.onclick = () => {
-    audioNodes.forEach((audio) => audio.play());
-    };
+  // geolocate._geolocateButton.onclick = () => {
+  //   audioNodes.forEach((audio) => audio.play());
+  // };
 
   map.addSource('pointSource', {
     type: 'geojson',
@@ -176,33 +172,33 @@ map.on('load', () => {
 });
 
 // add WASD functionality
-document.addEventListener('keydown', function(event) {
-
-  if(event.keyCode == 65) {
-    testpoint.geometry.coordinates[0] -= pos_increment
-  }
-  else if(event.keyCode == 68) {
-    testpoint.geometry.coordinates[0] += pos_increment
-  }
-  else if(event.keyCode == 87) {
-    testpoint.geometry.coordinates[1] += pos_increment
-  }
-  else if(event.keyCode == 83) {
-    testpoint.geometry.coordinates[1] -= pos_increment
-  }
-  else if(event.keyCode == 189) {
+document.addEventListener('keydown', (event) => {
+  let relevant_key_tripped = false;
+  if (event.keyCode == 65) {
+    testpoint.geometry.coordinates[0] -= pos_increment;
+    relevant_key_tripped = true;
+  } else if (event.keyCode == 68) {
+    testpoint.geometry.coordinates[0] += pos_increment;
+    relevant_key_tripped = true;
+  } else if (event.keyCode == 87) {
+    testpoint.geometry.coordinates[1] += pos_increment;
+    relevant_key_tripped = true;
+  } else if (event.keyCode == 83) {
+    testpoint.geometry.coordinates[1] -= pos_increment;
+    relevant_key_tripped = true;
+  } else if (event.keyCode == 189) {
     pos_increment -= 0.00005;
-    console.log(pos_increment)
-  }
-  else if(event.keyCode == 187) {
+    console.log(pos_increment);
+  } else if (event.keyCode == 187) {
     pos_increment += 0.00005;
-    console.log(pos_increment)
+    console.log(pos_increment);
   }
+  if (relevant_key_tripped) {
+    const latitude = testpoint.geometry.coordinates[1];
+    const longitude = testpoint.geometry.coordinates[0];
 
-  const latitude = testpoint.geometry.coordinates[1];
-  const longitude = testpoint.geometry.coordinates[0];
-
-  let pt = point([longitude, latitude]);
-  map.getSource('pointSource').setData(testpoint);
-  update_audio(pt);
-})
+    const pt = point([longitude, latitude]);
+    map.getSource('pointSource').setData(testpoint);
+    update_audio(pt);
+  }
+});
