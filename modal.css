@@ -266,6 +266,11 @@ opacity: 0;
 padding-bottom: .5rem;
 }
 
+#fake-close {
+opacity: 0;
+display: none;
+}
+
 
 
 .secondary {

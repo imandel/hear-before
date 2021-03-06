@@ -183,7 +183,7 @@ class RecordingToggle {
       if (!_this.isOpen) {
         _this.isOpen = true;
         _this._btn.classList.add('recording');
-        document.querySelector('#modal-2 > div > div > header > button').click();
+        document.querySelector('#fake-close').click();
         MicroModal.show('modal-1', {
           onClose: () => {
             _this._btn.classList.remove('recording');
