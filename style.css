@@ -11,12 +11,6 @@ html {
 	height: -webkit-fill-available;
 }
 
-.container {
-    display: flex;
-    align-items: stretch;
-    /*height: 30vh;*/
-}
-
 #map{
 	width: 100%;
 	height: 100%;
