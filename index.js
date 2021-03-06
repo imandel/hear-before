@@ -33,11 +33,11 @@ for (let i = 0; i < numAudioNodes; i++) {
   audioNodes.push(node);
 }
 
-const testpoint = point([-73.95630, 40.75617]);
+const testpoint = point([-73.9900483, 40.739149]);
 let pos_increment = 0.00001;
 
 // testing easeinCirc
-const scaleAudio = (vol) => 1.0 - (1 - vol ** 2) ** 0.5;
+const scaleAudio = (vol) => 1 - (1 - vol ** 4) ** 0.5;
 
 // dist to audio source
 // audioStart is distance you start hearing anything
@@ -53,7 +53,7 @@ for (let i = -0.1; i < 0.1; i += 0.002) {
 mapboxgl.accessToken = 'pk.eyJ1IjoiaW1hbmRlbCIsImEiOiJjankxdjU4ODMwYTViM21teGFpenpsbmd1In0.IN9K9rp8-I5pTbYTmwRJ4Q';
 const map = new mapboxgl.Map({
   container: 'map',
-  style: 'mapbox://styles/imandel/ckltxkila2vov17lkz1b5kjym',
+  style: 'mapbox://styles/imandel/ckl2jd7kg1hvc17rxxxiwtk97',
   center: [-73.946382, 40.724478],
   zoom: 12,
 });
@@ -118,6 +118,7 @@ const update_audio = (pt) => {
     }
       if (SpatialAudioOn===true){
         node.volume(dist2volume(dist, 0.07));
+        console.log(dist2volume(dist, 0.07))
       }
       else{
         console.log('SA off tturning all volumes off');
@@ -129,6 +130,10 @@ const update_audio = (pt) => {
       console.log('Found Closest');
       closest_node.volume(dist2volume(closeset_distance, 0.07));
   }
+  if (closest_node !== null ) {
+      closest_node.volume(dist2volume(closeset_distance, 0.07) + 0.25);
+      console.log(dist2volume(closeset_distance, 0.07) + 0.25)
+    }
 
 }
 
@@ -167,7 +172,18 @@ map.on('load', () => {
     paint: {
       'circle-radius': 7,
       'circle-opacity': 1,
-      'circle-color': '#333',
+      'circle-color': '#ee0000',
+    },
+  });
+
+  map.addLayer({
+    id: 'testPoint',
+    type: 'circle',
+    source: 'pointSource',
+    paint: {
+      'circle-radius': 20,
+      'circle-opacity': 0.1,
+      'circle-color': '#ee0000',
     },
   });
 });
