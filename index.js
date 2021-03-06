@@ -15,12 +15,13 @@ Howl.prototype.changeSrc = function (newSrc) {
   self.unload();
   self._src = newSrc;
   self.load();
-}
+};
 Howl.prototype.playbackPos = 0;
 const numAudioNodes = 10;
 const audioNodes = [];
 let gps;
-let SpatialAudioOn=true;
+let SpatialAudioOn = true;
+let muted = false;
 
 // maybe we don't need this anymore
 for (let i = 0; i < numAudioNodes; i++) {
@@ -66,6 +67,20 @@ const geolocate = new mapboxgl.GeolocateControl({
   compact: true,
 });
 
+const recordingToggle = new RecordingToggle(audioNodes);
+
+recordingToggle.em.addEventListener('opened', () => {
+  console.log('opened')
+  
+  muted = true;
+  audioNodes.forEach((node) => node.mute(true));
+});
+recordingToggle.em.addEventListener('closed', () => {
+  muted = false;
+  audioNodes.forEach((node) => node.mute(false));
+
+});
+
 const rankAudios = (pt) => {
   const features = map.queryRenderedFeatures({ layers: ['audio-samples'] });
 
@@ -84,32 +99,31 @@ const update_audio = (pt) => {
   let closest_node = null;
   let closeset_distance = null;
 
-
   audioNodes.forEach((node, idx) => {
-    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
+    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`;
     // get distance for volumen adjustments
     const dist = distance(pt, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
 
-    if(node._src !== rankSrc){
+    if (node._src !== rankSrc) {
+      const pos = node.seek(); // Remembering the old playback position befor we reload
+      // console.log("Befor "+ pos)
+      // define the new howl
+      node.unload();
+      node = new Howl({
+        src: [rankSrc],
+        autoplay: true,
+        loop: false,
+        volume: dist2volume(dist, 0.07),
+        onend() {
+          setTimeout(() => { node.play(); }, 2000);
+        },
 
-        let pos =  node.seek() // Remembering the old playback position befor we reload
-        //console.log("Befor "+ pos)
-        // define the new howl
-        node.unload();
-        node = new Howl({
-          src: [rankSrc],
-          autoplay: true,
-          loop: false,
-          volume: dist2volume(dist, 0.07),
-          onend: function() {
-            setTimeout(() => { node.play(); }, 2000);
-          }
-        });
-        node.seek(pos); // applying the previous playback position
-        //console.log("After "+ node.seek());
+      });
+      node.seek(pos); // applying the previous playback position
+      // console.log("After "+ node.seek());
 
-        // update audioNodes to use the new howl obj
-        audioNodes[idx] = node;
+      // update audioNodes to use the new howl obj
+      audioNodes[idx] = node;
     }
     // update the closest node pointer w closest distance
     if (closest_node === null || dist < closeset_distance) {
@@ -118,7 +132,7 @@ const update_audio = (pt) => {
     }
       if (SpatialAudioOn===true){
         node.volume(dist2volume(dist, 0.07));
-        console.log(dist2volume(dist, 0.07))
+        // console.log(dist2volume(dist, 0.07))
       }
       else{
         console.log('SA off tturning all volumes off');
@@ -126,35 +140,29 @@ const update_audio = (pt) => {
     }
   });
 
-  if (SpatialAudioOn===false){
-      console.log('Found Closest');
-      closest_node.volume(dist2volume(closeset_distance, 0.07));
+  if (SpatialAudioOn === false) {
+    console.log('Found Closest');
+    closest_node.volume(dist2volume(closeset_distance, 0.07));
   }
-  if (closest_node !== null ) {
-      closest_node.volume(dist2volume(closeset_distance, 0.07) + 0.25);
-      console.log(dist2volume(closeset_distance, 0.07) + 0.25)
-    }
-
-}
+};
 
 geolocate.on('geolocate', (e) => {
   const { latitude, longitude } = e.coords;
   gps = point([longitude, latitude]);
+  if(!muted){
   update_audio(gps);
+  }
 });
 // Delegate functions:
-function setSA(val){
-  SpatialAudioOn =val;
+function setSA(val) {
+  SpatialAudioOn = val;
 }
 
-
-
 map.addControl(geolocate);
-map.addControl(new RecordingToggle(audioNodes), 'top-right');
+map.addControl(recordingToggle, 'top-right');
 map.addControl(new SpatialAudioToggle(setSA), 'top-right');
 
 map.on('load', () => {
-
   // this was for testing the audio dropoff
   // geolocate._geolocateButton.onclick = () => {
   //   audioNodes.forEach((audio) => audio.play());
