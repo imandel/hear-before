@@ -226,6 +226,6 @@ document.addEventListener('keydown', (event) => {
 
     const pt = point([longitude, latitude]);
     map.getSource('pointSource').setData(testpoint);
-    update_audio(pt);
+    // update_audio(pt);
   }
 });
