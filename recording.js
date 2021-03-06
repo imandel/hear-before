@@ -1,110 +1,62 @@
 import MicroModal from 'micromodal';
 import WaveSurfer from 'wavesurfer.js';
+// import MicrophonePlugin from './wavemic';
 import MicrophonePlugin from 'wavesurfer.js/src/plugin/microphone';
 import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
 import mime from 'mime';
-import { v4 as uuid } from 'uuid';
 import Swal from 'sweetalert2';
-import { Howl, Howler } from 'howler';
-
-const REGION = 'us-east-1';
-const BUCKET = 'hear-before-nyc';
-let streamID;
-let audioURI;
-let audioBlob;
-let type;
-
-const setupAudio = (start, play, upload, wave) => {
-  play.disabled = true;
-
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    console.log('getUserMedia supported.');
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then((stream) => {
-        streamID = stream;
-        let chunks = [];
-        const mediaRecorder = new MediaRecorder(stream);
-        start.onclick = () => {
-          console.log('clicked');
-          if (start.classList.contains('clicked')) {
-            console.log('stop recording');
-            mediaRecorder.stop();
-            start.classList.remove('clicked');
-            wave.microphone.stop();
-            start.innerText = 'Record Again';
-            start.classList.remove('clicked');
-            play.disabled = false;
-          } else {
-            console.log('begin recording');
-            mediaRecorder.start();
-            start.classList.add('clicked');
-            start.innerText = 'Stop Recording';
-            play.disabled = true;
-            wave.microphone.start();
-          }
-        };
-
-        mediaRecorder.ondataavailable = (e) => {
-          chunks.push(e.data);
-        };
-
-        mediaRecorder.onstop = () => {
-          type = mime.extension(mediaRecorder.mimeType);
-          audioBlob = new Blob(chunks);
-
-          chunks = [];
-          upload.disabled = false;
-          const reader = new FileReader();
-          reader.readAsDataURL(audioBlob);
-          reader.onloadend = () => {
-            audioURI = reader.result;
-            wave.load(audioURI);
-            document.querySelector('#modal-1 > div > div > footer > textarea').style.display = 'block';
-          };
-        };
-      })
-      .catch((err) => {
-        console.log(`The following getUserMedia error occurred: ${err}`);
-        Swal.fire({
-          icon: 'error',
-          title: 'Oops...',
-          text: 'You may need to update your phone or browser to use this feature!',
-        });
-      });
-  } else {
-    alert('You may need to update to the latest version of your browser!');
-  }
-};
+import { RecorderService } from './RecorderService';
 
 class RecordingToggle {
-  // _audioNodes: audioNodes;
-  // _modalState: 'CLOSED' | 'OPEN'
-  
   constructor(audioNodes) {
     this.audioNodes = audioNodes;
+    this.isOpen = false;
+    this.isRecording = false;
+    this.lat = '';
+    this.lng = '';
+    this.REGION = 'us-east-1';
+    this.BUCKET = 'hear-before-nyc';
+    this.s3 = new S3Client({
+      region: this.REGION,
+      credentials: fromCognitoIdentityPool({
+        client: new CognitoIdentityClient({ region: this.REGION }),
+        identityPoolId: 'us-east-1:e0492f61-36b6-4f08-822d-b122d0947a16', // IDENTITY_POOL_ID
+      }),
+    });
+    this.wavesurfer = WaveSurfer.create({
+      container: '#waveform',
+      waveColor: '#bd6868',
+      progressColor: '#8f4c4c',
+      barWidth: 3,
+      barRadius: 3,
+      barGap: 3,
+      interact: false,
+      cursorWidth: 0,
+      plugins: [
+        // MicrophonePlugin.create(),
+      ],
+    });
   }
 
-  onAdd(map) {
-    console.log(map)
-    const _this = this;
-    const record = document.querySelector('#modal-1 > div > div > footer > button:nth-child(1)');
-    const play = document.querySelector('#modal-1 > div > div > footer > button:nth-child(2)');
-    const localInput = document.querySelector('#file-input');
-    const upload = document.querySelector('#modal-1 > div > div > footer > button:nth-child(3)');
-    const textarea = document.querySelector('#modal-1 > div > div > footer > textarea');
-    let wavesurfer;
-    let lat = '';
-    let lng = '';
-    upload.onclick = () => {
-      console.log('clicked');
-      console.log({ lat, lng, comments: textarea.value });
-      uploadFile(audioBlob, `${uuid()}.${type}`, { lat: lat.toString(), lng: lng.toString(), comments: textarea.value });
-      wavesurfer.empty();
-      upload.disabled = true;
-      play.disabled = true;
-    };
+  download() {
+    const link = document.createElement('a');
+    link.href = this.blobUrl;
+    link.download = name;
+    document.body.appendChild(link);
+    link.dispatchEvent(
+      new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      }),
+    );
+    document.body.removeChild(link);
+  }
+
+  async uploadFile(blob, meta) {
+    const file = new File([blob], new Date().valueOf(), { type: this.mime });
     const Toast = Swal.mixin({
       toast: true,
       position: 'top-end',
@@ -112,113 +64,148 @@ class RecordingToggle {
       timer: 1000,
     });
 
-    const s3 = new S3Client({
-      region: REGION,
-      credentials: fromCognitoIdentityPool({
-        client: new CognitoIdentityClient({ region: REGION }),
-        identityPoolId: 'us-east-1:e0492f61-36b6-4f08-822d-b122d0947a16', // IDENTITY_POOL_ID
-      }),
-    });
-    const uploadFile = async (blob, name, meta) => {
-      const uploadParams = {
-        Bucket: BUCKET,
-        Key: `uploads/${name}`,
-        Body: blob,
-        Metadata: meta,
-      };
+    const uploadParams = {
+      Bucket: this.BUCKET,
+      Key: `uploads/${file.name}.${this.ext}`,
+      Body: blob,
+      Metadata: meta,
+    };
 
-      try {
-        await s3.send(new PutObjectCommand(uploadParams));
-        console.log('success');
+    try {
+      await this.s3.send(new PutObjectCommand(uploadParams));
+      console.log('success');
+      Toast.fire({
+        icon: 'success',
+        title: 'File Uploaded!',
+      });
+      this.wavesurfer.empty();
+      this.play.disabled = true;
+      this.upload.disabled = true;
+      this.textarea.style.display = 'none';
+      this.textarea.value = '';
+    } catch (err) {
+      console.log('There was an error uploading file: ', err.message);
         Toast.fire({
-          icon: 'success',
-          title: 'File Uploaded!',
-        });
-      } catch (err) {
-        console.log('There was an error uploading file: ', err.message);
-      }
-    };
-    localInput.onchange = (e) => {
-      if (localInput.files.length > 0) {
-        audioBlob = localInput.files[0];
-        type = mime.extension(audioBlob.type);
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-          audioURI = reader.result;
-          wavesurfer.load(audioURI);
-          play.disabled = false;
-          upload.disabled = false;
-          document.querySelector('#modal-1 > div > div > footer > textarea').style.display = 'block';
-        };
-      }
-    };
+        icon: 'error',
+        title: 'Error Uploading',
+      });
+    }
+  }
 
+  _recordingComplete(e) {
+    console.log('recording complete');
+    this.play.disabled = false;
+    this.upload.disabled = false;
+    this.ext = mime.extension(e.detail.recording.mimeType);
+    this.mime = e.detail.recording.mimeType;
+    this.blobUrl = e.detail.recording.blobUrl;
+    this.blobFile = e.detail.recording.blobFile;
+    this.wavesurfer.load(this.blobUrl);
+    this.textarea.style.display = 'block';
+  }
+
+  _startRecording() {
+    if (!this.recorderSrvc) {
+      this.recorderSrvc = new RecorderService();
+      this.recorderSrvc.em.addEventListener('recording', (e) => {
+        this._recordingComplete(e);
+      });
+    }
+    this.recorderSrvc.startRecording();
+    this.isRecording = true;
+    this.record.classList.add('clicked');
+    this.record.innerText = 'Stop Recording';
+    this.play.disabled = true;
+    // this.wavesurfer.microphone.start();
+  }
+
+  _stopRecording() {
+    if (this.recorderSrvc && this.isRecording) {
+      this.recorderSrvc.stopRecording();
+      this.isRecording = false;
+      this.record.classList.remove('clicked');
+      // this.wavesurfer.microphone.stop();
+      this.record.innerText = 'Record';
+    }
+  }
+
+  onAdd(map) {
+    const _this = this;
     this._btn = document.createElement('button');
     this._btn.className = 'mapboxgl-ctrl-icon mapboxgl-ctrl-rec';
     this._btn.type = 'button';
     this._btn['aria-label'] = 'Toggle Recording';
+
+    this.record = document.getElementById('record') 
+    this.play = document.getElementById('play') 
+    this.localInput = document.getElementById('file')
+    this.upload = document.getElementById('upload') 
+    this.textarea = document.getElementById('textarea') 
+    this.record.onclick = () => {
+      if (!this.isRecording) {
+        console.log('start');
+
+        this._startRecording();
+      } else {
+        console.log('stop');
+        this._stopRecording();
+      }
+    };
+
+    this.play.onclick = () => {
+      this.wavesurfer.play();
+      this.play.classList.add('clicked');
+      this.wavesurfer.on('finish', () => this.play.classList.remove('clicked'));
+    };
+
+    this.localInput.onchange = (e) => {
+      if (this.localInput.files.length > 0) {
+        const file = this.localInput.files[0];
+        this.type = mime.extension(file.type);
+        console.log(this.type);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const data = reader.result;
+          this.wavesurfer.load(data);
+          this.play.disabled = false;
+          this.upload.disabled = false;
+          document.querySelector('#modal-1 > div > div > footer > textarea').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    this.upload.onclick = () => {
+      this.uploadFile(this.blobFile, { lat: this.lat, lng: this.lng, comments: this.textarea.value });
+    };
+
     this._btn.onclick = () => {
-      if (!_this._btn.classList.contains('recording')) {
-        _this._btn.classList.toggle('recording');
-        this.audioNodes.forEach((node) => node.mute(true));
-        // this is super delayed and I'm not sure why
-        navigator.geolocation.getCurrentPosition((position) => {
-          console.log('recording got position');
-          lat = position.coords.latitude;
-          lng = position.coords.longitude;
-        });
-        MicroModal.close('modal-2');
+      if (!_this.isOpen) {
+        _this.isOpen = true;
+        _this._btn.classList.add('recording');
+        document.querySelector('#modal-2 > div > div > header > button').click();
         MicroModal.show('modal-1', {
           onClose: () => {
-            console.log('close')
-            _this._btn.classList.toggle('recording');
-            wavesurfer.destroy();
-            streamID.getTracks().forEach((track) => {
-              track.stop();
-            });
-            upload.disabled = true;
-            this.audioNodes.forEach((node) => node.mute(false));
+            _this._btn.classList.remove('recording');
+            _this.isOpen = false;
           },
         });
-        wavesurfer = WaveSurfer.create({
-          container: '#waveform',
-          waveColor: '#bd6868',
-          progressColor: '#8f4c4c',
-          barWidth: 3,
-          barRadius: 3,
-          barGap: 3,
-          interact: false,
-          cursorWidth: 0,
-          plugins: [
-            MicrophonePlugin.create(),
-          ],
+        navigator.geolocation.getCurrentPosition((position) => {
+          console.log('recording got position');
+          _this.lat = position.coords.latitude.toString();
+          _this.lng = position.coords.longitude.toString();
         });
-        play.onclick = () => {
-          console.log('playing');
-          wavesurfer.play();
-        };
-        setupAudio(record, play, upload, wavesurfer);
-      } else {
-        MicroModal.close('modal-1', {
-          onClose: () => {
-            console.log('close')
-            _this._btn.classList.toggle('recording');
-            wavesurfer.destroy();
-            streamID.getTracks().forEach((track) => {
-              track.stop();
-            });
-            upload.disabled = true;
-            this.audioNodes.forEach((node) => node.mute(false));
-          },
-        });
+
+} else {
+        this.isOpen = false;
+        _this._btn.classList.remove('recording');
+        MicroModal.close('modal-1');
       }
     };
 
     this._container = document.createElement('div');
     this._container.className = 'mapboxgl-ctrl-group mapboxgl-ctrl';
     this._container.appendChild(this._btn);
-
     return this._container;
   }
 

@@ -5,7 +5,7 @@ import { Howl, Howler } from 'howler';
 import MicroModal from 'micromodal';
 import { RecordingToggle } from './recording';
 
-MicroModal.init();
+// MicroModal.init();
 MicroModal.show('modal-2');
 
 // prototype to update the SRC for the audio in a howl
