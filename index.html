@@ -3,10 +3,10 @@
 <head>
   <title>hear, before</title>
   <meta charset="utf-8">
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link href='https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.css' rel='stylesheet' />
   <link rel="stylesheet" type="text/css" href="style.css" media="screen"/>
   <link rel="stylesheet" type="text/css" href="modal.css" media="screen"/>
-  <link href='https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.css' rel='stylesheet' />
   <title>Index Page</title>
 </head>
 <body>
@@ -15,23 +15,28 @@
     <div class="modal__overlay" tabindex="-1" data-micromodal-close>
       <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-1-title">
         <header class="modal__header">
+                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
           <h2 class="modal__title" id="modal-1-title">
             Recorder
           </h2>
-          <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+
         </header>
         <main class="modal__content" id="modal-1-content">
         	          <div id="waveform"></div>
         </main>
         <footer class="modal__footer">
-          <button class="modal__btn">Record</button>
-          <button class="modal__btn" disabled>Play</button>
-          <button class="modal__btn" disabled>Upload</button>
+          <div class = "button-line">
+          <button id="record" class="modal__btn row-button">Record</button>
+          <button id="play" class="modal__btn row-button" disabled>Play</button>
+          <button id="upload" class="modal__btn row-button" disabled>Upload</button>
+        </div>
+          
+          <div class="file-input">
+          <input type="file" id="file" accept="audio/*" hidden/>
+          <label for="file" class="secondary modal__btn">Or Choose File</label>
+          </div>
           <br>
-          <input type="file" id="file-input" accept="audio/*" hidden/>
-          <label for="file-input" class="secondary">Or Choose File</label>
-          <br>
-          <textarea class="modal__textarea" maxlength="1500" placeholder="Tell us something about this sound?" rows="5"></textarea>
+          <textarea id="textarea" class="modal__textarea" maxlength="1500" placeholder="Tell us something about this sound?" rows="5"></textarea>
         </footer>
       </div>
     </div>
@@ -44,11 +49,11 @@
           <h2 class="modal__title" id="modal-2-title">
             Hi Volunteers
           </h2>
-          <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+
         </header>
         <main class="modal__content" id="modal-2-content">
           <p>
-            Thanks so much for helping us out. Right now the map has filler audio (book parts chopped up with text2speech). We would really appreciate if you could help by recording audio and uploading it. All you have to do is hit the microphone to the right, you can upload files you have elsewhere or record your own. It could be anything you find interesting, from ambient noise while walking around, to singing and poetry. Whatever strikes you. If you run into any bugs please let us know before the even goes live! Thanks, Amrit, David, and Ilan
+            Thanks so much for helping us out. Right now the map has filler audio (book parts chopped up with text2speech). We would really appreciate if you could help by recording audio and uploading it. All you have to do is hit the microphone to the right, you can upload files you have elsewhere or record your own. It could be anything you find interesting, from ambient noise while walking around, to singing and poetry. Whatever strikes you. If you run into any bugs please let us know before the event goes live! Thanks, Amrit, David, and Ilan
           </p>
         </main>
         <footer class="modal__footer">
