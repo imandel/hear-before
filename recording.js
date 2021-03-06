@@ -23,7 +23,8 @@ class RecordingToggle {
       region: this.REGION,
       credentials: fromCognitoIdentityPool({
         client: new CognitoIdentityClient({ region: this.REGION }),
-        identityPoolId: 'us-east-1:e0492f61-36b6-4f08-822d-b122d0947a16', // IDENTITY_POOL_ID
+        // identityPoolId: 'us-east-1:e0492f61-36b6-4f08-822d-b122d0947a16', // IDENTITY_POOL_ID
+        identityPoolId: "us-east-1:187d4fa8-dea6-4bd1-bb6d-8a2593268a85"
       }),
     });
     this.wavesurfer = WaveSurfer.create({
