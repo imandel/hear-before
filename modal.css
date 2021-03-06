@@ -285,9 +285,14 @@ display: none;
   transition: all 0.5s ease-out;
 }
 
-
-
-@media only screen and (max-width: 600px) {
+  .row-button {
+    flex-grow: 1;
+    text-align: stretch;
+    justify-content: stretch;
+      margin-right: .2em;
+  margin-left: .2em;
+  align-items: stretch;
+  }
   .button-line {
   display: -webkit-box;   
   display: -moz-box;  
@@ -300,12 +305,9 @@ display: none;
   justify-content: space-between;
   flex-wrap: nowrap;
   }
-  .row-button {
-    flex-grow: 1;
-    text-align: center;
-      margin-right: .2em;
-  margin-left: .2em;
-  }
+@media only screen and (max-width: 600px) {
+
+
     .modal__container {
     background-color: #fff;
     padding: 30px;
