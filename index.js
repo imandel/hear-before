@@ -4,6 +4,7 @@ import distance from '@turf/distance';
 import { Howl, Howler } from 'howler';
 import MicroModal from 'micromodal';
 import { RecordingToggle } from './recording';
+import { SpatialAudioToggle } from './spatialaudio';
 
 // MicroModal.init();
 MicroModal.show('modal-2');
@@ -14,12 +15,13 @@ Howl.prototype.changeSrc = function (newSrc) {
   self.unload();
   self._src = newSrc;
   self.load();
-};
-
+}
+Howl.prototype.playbackPos = 0;
 const numAudioNodes = 10;
 const audioNodes = [];
 let gps;
-window.audioNodes = audioNodes;
+let SpatialAudioOn=true;
+
 // maybe we don't need this anymore
 for (let i = 0; i < numAudioNodes; i++) {
   const node = new Howl({
@@ -82,46 +84,72 @@ const update_audio = (pt) => {
   let closest_node = null;
   let closeset_distance = null;
 
+
   audioNodes.forEach((node, idx) => {
-    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`;
-    // get distance for volume adjustments
+    const rankSrc = `https://hear-before-nyc.s3.amazonaws.com/${closeTen[idx].properties.filename}`
+    // get distance for volumen adjustments
     const dist = distance(pt, point([closeTen[idx].properties.lng, closeTen[idx].properties.lat]));
-    if (node._src !== rankSrc) {
-      // define the new howl
-      node = new Howl({
-        src: [rankSrc],
-        autoplay: true,
-        loop: false,
-        volume: dist2volume(dist, 0.07),
-        mute: document.getElementById('modal-1').classList.contains('is-open'),
-        onend() {
-          setTimeout(() => { node.play(); }, 2000);
-        },
-      });
 
-      // update the closest node pointer w closest distance
-      if (closest_node === null || dist < closeset_distance) {
-        closeset_distance = dist;
-        closest_node = node;
-      }
+    if(node._src !== rankSrc){
 
-      // update audioNodes to use the new howl obj
-      audioNodes[idx] = node;
+        let pos =  node.seek() // Remembering the old playback position befor we reload
+        //console.log("Befor "+ pos)
+        // define the new howl
+        node.unload();
+        node = new Howl({
+          src: [rankSrc],
+          autoplay: true,
+          loop: false,
+          volume: dist2volume(dist, 0.07),
+          onend: function() {
+            setTimeout(() => { node.play(); }, 2000);
+          }
+        });
+        node.seek(pos); // applying the previous playback position
+        //console.log("After "+ node.seek());
+
+        // update audioNodes to use the new howl obj
+        audioNodes[idx] = node;
     }
-    node.volume(dist2volume(dist, 0.07));
+    // update the closest node pointer w closest distance
+    if (closest_node === null || dist < closeset_distance) {
+      closeset_distance = dist;
+      closest_node = node;
+    }
+      if (SpatialAudioOn===true){
+        node.volume(dist2volume(dist, 0.07));
+      }
+      else{
+        console.log('SA off tturning all volumes off');
+        node.volume(0);
+    }
   });
-};
+
+  if (SpatialAudioOn===false){
+      console.log('Found Closest');
+      closest_node.volume(dist2volume(closeset_distance, 0.07));
+  }
+
+}
 
 geolocate.on('geolocate', (e) => {
   const { latitude, longitude } = e.coords;
   gps = point([longitude, latitude]);
   update_audio(gps);
 });
+// Delegate functions:
+function setSA(val){
+  SpatialAudioOn =val;
+}
+
+
 
 map.addControl(geolocate);
 map.addControl(new RecordingToggle(audioNodes), 'top-right');
+map.addControl(new SpatialAudioToggle(setSA), 'top-right');
 
 map.on('load', () => {
+
   // this was for testing the audio dropoff
   // geolocate._geolocateButton.onclick = () => {
   //   audioNodes.forEach((audio) => audio.play());
