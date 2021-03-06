@@ -18,6 +18,7 @@ class RecordingToggle {
     this.lng = '';
     this.REGION = 'us-east-1';
     this.BUCKET = 'hear-before-nyc';
+    this.em = document.createDocumentFragment();
     this.s3 = new S3Client({
       region: this.REGION,
       credentials: fromCognitoIdentityPool({
@@ -85,7 +86,7 @@ class RecordingToggle {
       this.textarea.value = '';
     } catch (err) {
       console.log('There was an error uploading file: ', err.message);
-        Toast.fire({
+      Toast.fire({
         icon: 'error',
         title: 'Error Uploading',
       });
@@ -136,11 +137,11 @@ class RecordingToggle {
     this._btn.type = 'button';
     this._btn['aria-label'] = 'Toggle Recording';
 
-    this.record = document.getElementById('record') 
-    this.play = document.getElementById('play') 
-    this.localInput = document.getElementById('file')
-    this.upload = document.getElementById('upload') 
-    this.textarea = document.getElementById('textarea') 
+    this.record = document.getElementById('record');
+    this.play = document.getElementById('play');
+    this.localInput = document.getElementById('file');
+    this.upload = document.getElementById('upload');
+    this.textarea = document.getElementById('textarea');
     this.record.onclick = () => {
       if (!this.isRecording) {
         console.log('start');
@@ -184,10 +185,12 @@ class RecordingToggle {
         _this.isOpen = true;
         _this._btn.classList.add('recording');
         document.querySelector('#fake-close').click();
+        this.em.dispatchEvent(new Event('opened'));
         MicroModal.show('modal-1', {
           onClose: () => {
             _this._btn.classList.remove('recording');
             _this.isOpen = false;
+            this.em.dispatchEvent(new Event('closed'));
           },
         });
         navigator.geolocation.getCurrentPosition((position) => {
@@ -195,11 +198,11 @@ class RecordingToggle {
           _this.lat = position.coords.latitude.toString();
           _this.lng = position.coords.longitude.toString();
         });
-
-} else {
+      } else {
         this.isOpen = false;
         _this._btn.classList.remove('recording');
         MicroModal.close('modal-1');
+        _this.em.dispatchEvent(new Event('closed'));
       }
     };
 
