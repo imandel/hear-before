@@ -175,27 +175,27 @@ map.on('load', () => {
     data: testpoint,
   });
 
-  map.addLayer({
-    id: 'testPoint',
-    type: 'circle',
-    source: 'pointSource',
-    paint: {
-      'circle-radius': 7,
-      'circle-opacity': 1,
-      'circle-color': '#ee0000',
-    },
-  });
+  // map.addLayer({
+  //   id: 'testPoint',
+  //   type: 'circle',
+  //   source: 'pointSource',
+  //   paint: {
+  //     'circle-radius': 7,
+  //     'circle-opacity': 1,
+  //     'circle-color': '#ee0000',
+  //   },
+  // });
 
-  map.addLayer({
-    id: 'testPoint',
-    type: 'circle',
-    source: 'pointSource',
-    paint: {
-      'circle-radius': 20,
-      'circle-opacity': 0.1,
-      'circle-color': '#ee0000',
-    },
-  });
+  // map.addLayer({
+  //   id: 'testPoint',
+  //   type: 'circle',
+  //   source: 'pointSource',
+  //   paint: {
+  //     'circle-radius': 20,
+  //     'circle-opacity': 0.1,
+  //     'circle-color': '#ee0000',
+  //   },
+  // });
 });
 
 // add WASD functionality
