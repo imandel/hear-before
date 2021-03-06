@@ -57,8 +57,10 @@ const map = new mapboxgl.Map({
   style: 'mapbox://styles/imandel/ckl2jd7kg1hvc17rxxxiwtk97',
   center: [-73.946382, 40.724478],
   zoom: 12,
+  attributionControl: false,
+  logoPosition: 'bottom-right'
 });
-
+map.addControl(new mapboxgl.AttributionControl({compact: true}), 'bottom-right');
 const geolocate = new mapboxgl.GeolocateControl({
   positionOptions: {
     enableHighAccuracy: true,
@@ -71,7 +73,7 @@ const recordingToggle = new RecordingToggle(audioNodes);
 
 recordingToggle.em.addEventListener('opened', () => {
   console.log('opened')
-  
+
   muted = true;
   audioNodes.forEach((node) => node.mute(true));
 });
