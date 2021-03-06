@@ -6,7 +6,7 @@ import MicroModal from 'micromodal';
 import { RecordingToggle } from './recording';
 import { SpatialAudioToggle } from './spatialaudio';
 
-MicroModal.init();
+// MicroModal.init();
 MicroModal.show('modal-2');
 
 // prototype to update the SRC for the audio in a howl
